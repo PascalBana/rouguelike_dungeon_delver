@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::{ascii::ascii::AsciiSheet, health::Health, pathfinding::Pathinder};
+use crate::{ascii::AsciiSheet, health::Health, pathfinding::Pathinder};
 
 pub const ENEMY_SIZE: f32 = 50.0;
 const ENEMY_SPEED: f32 = 10.0;

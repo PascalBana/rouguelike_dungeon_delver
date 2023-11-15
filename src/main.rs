@@ -7,9 +7,9 @@ mod enemy;
 mod health;
 mod pathfinding;
 
-use player::player::*;
-use ascii::ascii::*;
-use map::map::*;
+use player::*;
+use ascii::*;
+use map::*;
 use enemy::*;
 use health::*;
 use pathfinding::*;
@@ -29,7 +29,7 @@ fn main() {
         FixedUpdate, (
             player_movement, 
             camera_follow, 
-            check_enemy_collision, 
+            attack_enemy, 
             health_check,
             move_towards_player,
         ))

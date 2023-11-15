@@ -1,6 +1,6 @@
 use bevy::{prelude::*, sprite::collide_aabb::collide};
 
-use crate::{player::player::{PLAYER_SIZE, Player, wall_collision_check}, map::map::TileCollider};
+use crate::{player::{PLAYER_SIZE, Player, wall_collision_check}, map::TileCollider};
 
 #[derive(Component)]
 pub struct Pathinder {
@@ -26,7 +26,7 @@ pub fn find_player_location(
         if collision.is_some() {
             return true;
         } 
-    return false;
+    false
 }
 
 // if player is in range, move towards player
