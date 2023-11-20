@@ -6,12 +6,24 @@ use std::{
 
 use bevy::prelude::*;
 use crate::ascii::*;
+use crate::gamestate::GameState;
+
+pub struct MapPlugin;
+
+impl Plugin for MapPlugin {
+    fn build(&self, app: &mut App) {
+        app
+            .add_systems(OnEnter(GameState::Game), spawn_map);
+    }
+}
 
 const TILE_SIZE: f32 = 50.0;
 
 #[derive(Component)]
 pub struct TileCollider;
 
+// add player exit tile to match statements
+// also add spawn point for player
 pub fn spawn_map(
     mut commands: Commands,
     ascii: Res<AsciiSheet>,
@@ -56,5 +68,9 @@ pub fn spawn_map(
     }
 }
 
-
+// create genrate level function
+// uses spawn map function and takes level as argument
+// uses level to find what file to open
+// and using match statements also decides whre to spawn player
+// and enemies, as well as all other spawns
 

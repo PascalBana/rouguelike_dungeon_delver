@@ -1,6 +1,22 @@
 use bevy::{prelude::*, sprite::collide_aabb::collide};
 
-use crate::{player::{PLAYER_SIZE, Player, wall_collision_check}, map::TileCollider};
+use crate::{player::{PLAYER_SIZE, 
+    Player, wall_collision_check}, 
+    map::TileCollider,
+    gamestate::GameState,
+};
+
+pub struct PathfinderPlugin;
+
+impl Plugin for PathfinderPlugin {
+    fn build(&self, app: &mut App) {
+        app
+            .add_systems(
+                FixedUpdate, (
+                move_towards_player,
+            ).run_if(in_state(GameState::Game)));
+    }
+}
 
 #[derive(Component)]
 pub struct Pathinder {
@@ -8,9 +24,6 @@ pub struct Pathinder {
     pub speed: f32,
 }
 
-// find player location, and whether or not it is in within vision range
-// if within range, return the player location
-// if not, return the last known location
 pub fn find_player_location(
     target_player_position: Vec3,
     pathfinder_position: Vec3,
@@ -29,7 +42,6 @@ pub fn find_player_location(
     false
 }
 
-// if player is in range, move towards player
 pub fn move_towards_player(
     wall_query: Query<&Transform, (With<TileCollider>, Without<Player>, Without<Pathinder>)>,
     player_transform_query: Query<&Transform, With<Player>>,

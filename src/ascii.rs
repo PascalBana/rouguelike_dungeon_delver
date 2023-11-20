@@ -1,10 +1,19 @@
-
 use bevy::prelude::*;
+
+pub struct AsciiPlugin;
+
+impl Plugin for AsciiPlugin {
+    fn build(&self, app: &mut App) {
+        // As this plugin is managing the splash screen, it will focus on the state `GameState::Splash`
+        app.
+            add_systems(PreStartup, load_ascii);
+            }
+}
 
 #[derive(Resource)]
 pub struct AsciiSheet(pub Handle<TextureAtlas>);
 
-pub fn load_ascii(
+fn load_ascii(
     mut commands:Commands,
     assest_server: Res<AssetServer>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,

@@ -1,11 +1,34 @@
-use bevy::prelude::*;
-use crate::{ascii::AsciiSheet, health::Health, pathfinding::Pathinder};
+use bevy::{prelude::*, sprite::collide_aabb::collide};
+use crate::{ascii::AsciiSheet, 
+    health::Health, 
+    pathfinding::Pathinder, 
+    player::{Player, PLAYER_SIZE},
+    gamestate::GameState,
+};
+
+pub struct EnemyPlugin;
+
+impl Plugin for EnemyPlugin {
+    fn build(&self, app: &mut App) {
+        app
+            .add_systems(
+                OnEnter(GameState::Game), (
+                spawn_enemy,
+            ))
+            .add_systems(
+                FixedUpdate, (
+                attack_player,
+            ).run_if(in_state(GameState::Game)));
+    }
+}
 
 pub const ENEMY_SIZE: f32 = 50.0;
-const ENEMY_SPEED: f32 = 10.0;
+const ENEMY_SPEED: f32 = 90.0;
 
 #[derive(Component)]
-pub struct Enemy;
+pub struct Enemy {
+    timer: Timer,
+}
 
 pub fn spawn_enemy(
     mut commands: Commands,
@@ -25,7 +48,9 @@ pub fn spawn_enemy(
         transform: Transform::from_translation(Vec3::new(560.0, -150.0, 890.0)),
         ..default()
     })
-    .insert(Enemy)
+    .insert(Enemy{
+        timer: Timer::from_seconds(1.5, TimerMode::Repeating)
+    })
     .insert(Name::new("Enemy"))
     .insert(Health {
         health: 30,
@@ -44,4 +69,26 @@ pub fn spawn_enemy(
         })
         .insert(Name::new("Background"));
     });
+}
+
+
+// if within range, attack player every 2 seconds
+pub fn attack_player(
+    mut enemy_transform: Query<(&Transform, &mut Enemy)>,
+    mut player_query: Query<(&Transform, &mut Health), With<Player>>,
+    time: Res<Time>,
+) {
+    let (player_transform, mut health) = player_query.single_mut();
+    for (enemy_transform, mut enemy) in enemy_transform.iter_mut() {
+        let collision = collide(
+            enemy_transform.translation,
+            Vec2::splat(ENEMY_SIZE * 1.2),
+            player_transform.translation,
+            Vec2::splat(PLAYER_SIZE),
+        );
+        if collision.is_some() && enemy.timer.tick(time.delta()).just_finished(){
+            health.health -= 1;
+            println!("Player Health: {}", health.health);
+        }
+    }
 }
