@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, core_pipeline::clear_color::ClearColorConfig};
 
 mod player;
 mod ascii;
@@ -7,6 +7,8 @@ mod enemy;
 mod health;
 mod pathfinding;
 mod gamestate;
+mod splash;
+mod menu;
 
 use player::*;
 use ascii::*;
@@ -15,12 +17,16 @@ use enemy::*;
 use health::*;
 use pathfinding::*;
 use gamestate::*;
+use splash::*;
+use menu::*;
 
 fn main() {
     App::new()                                                         
         .add_plugins((
             DefaultPlugins.set(ImagePlugin::default_nearest()),
             StartupPlugin,
+            SplashPlugin,
+            MenuPlugin,
             AsciiPlugin,
             MapPlugin,
             PlayerPlugin,
@@ -28,7 +34,7 @@ fn main() {
             HealthPlugin,
             PathfinderPlugin,
         ))
-
+        .add_state::<GameState>()
         .run(); 
 }
 
@@ -45,6 +51,9 @@ impl Plugin for StartupPlugin {
 
 fn spawn_camera(mut commands: Commands) {
     commands.spawn(Camera2dBundle {
+        camera_2d: Camera2d {
+            clear_color: ClearColorConfig::Custom(Color::rgb(0.0, 0.0, 0.0)),
+        },
         ..default()
     });
 }
