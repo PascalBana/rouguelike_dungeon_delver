@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::gamestate::GameState;
+use crate::{gamestate::GameState, map::GameLevel};
 
 pub struct HealthPlugin;
 
@@ -8,7 +8,7 @@ impl Plugin for HealthPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_systems(FixedUpdate,
-                health_check.run_if(in_state(GameState::Game))
+                health_check.run_if(in_state(GameState::Game(GameLevel::Level1)))
             );
     }
 }

@@ -2,7 +2,7 @@ use bevy::{prelude::*, sprite::collide_aabb::collide};
 
 use crate::{player::{PLAYER_SIZE, 
     Player, wall_collision_check}, 
-    map::TileCollider,
+    map::{TileCollider, GameLevel},
     gamestate::GameState,
 };
 
@@ -14,7 +14,7 @@ impl Plugin for PathfinderPlugin {
             .add_systems(
                 FixedUpdate, (
                 move_towards_player,
-            ).run_if(in_state(GameState::Game)));
+            ).run_if(in_state(GameState::Game(GameLevel::Level1))));
     }
 }
 

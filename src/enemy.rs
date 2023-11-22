@@ -3,7 +3,7 @@ use crate::{ascii::AsciiSheet,
     health::Health, 
     pathfinding::Pathinder, 
     player::{Player, PLAYER_SIZE},
-    gamestate::GameState,
+    gamestate::GameState, map::GameLevel,
 };
 
 pub struct EnemyPlugin;
@@ -12,18 +12,14 @@ impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_systems(
-                OnEnter(GameState::Game), (
-                spawn_enemy,
-            ))
-            .add_systems(
                 FixedUpdate, (
                 attack_player,
-            ).run_if(in_state(GameState::Game)));
+            ).run_if(in_state(GameState::Game(GameLevel::Level1))));
     }
 }
 
 pub const ENEMY_SIZE: f32 = 50.0;
-const ENEMY_SPEED: f32 = 90.0;
+const ENEMY_SPEED: f32 = 40.0;
 
 #[derive(Component)]
 pub struct Enemy {
@@ -31,8 +27,9 @@ pub struct Enemy {
 }
 
 pub fn spawn_enemy(
-    mut commands: Commands,
-    ascii: Res<AsciiSheet>,
+    commands: &mut Commands,
+    ascii: &Res<AsciiSheet>,
+    spawn_point: Vec3,
 ) {
     let mut background_sprite = TextureAtlasSprite::new(0);
     background_sprite.color = Color::rgb(0.2, 0.2, 0.2);
@@ -45,7 +42,7 @@ pub fn spawn_enemy(
     commands.spawn(SpriteSheetBundle {
         sprite,
         texture_atlas: ascii.0.clone(),
-        transform: Transform::from_translation(Vec3::new(560.0, -150.0, 890.0)),
+        transform: Transform::from_translation(spawn_point),
         ..default()
     })
     .insert(Enemy{

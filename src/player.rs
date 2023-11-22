@@ -1,14 +1,14 @@
 use bevy::transform::components::Transform;
 
-use crate::enemy::{ENEMY_SIZE, Enemy};
+use crate::enemy::{ENEMY_SIZE, Enemy, self};
 use crate::health::Health;
 use crate::gamestate::GameState;    
 
-use crate::ascii::*;
-use crate::map::TileCollider;
+use crate::{ascii::*, player};
+use crate::map::{TileCollider, GameLevel};
 use crate::pathfinding::Pathinder;
 use bevy::prelude::*;
-use bevy::sprite::collide_aabb::collide;
+use bevy::sprite::collide_aabb::{collide, Collision};
 
 pub struct PlayerPlugin;
 
@@ -16,15 +16,11 @@ impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_systems(
-                OnEnter(GameState::Game), (
-                spawn_player, 
-            ))
-            .add_systems(
             FixedUpdate, (
                 player_movement, 
                 camera_follow, 
                 attack_enemy, 
-            ).run_if(in_state(GameState::Game)));
+            ).run_if(in_state(GameState::Game(GameLevel::Level1))));
     }
     
 }
@@ -110,8 +106,9 @@ pub fn wall_collision_check(
 }
 
 pub fn spawn_player(
-    mut commands: Commands,
-    ascii: Res<AsciiSheet>,
+    commands: &mut Commands,
+    ascii: &Res<AsciiSheet>,
+    spawn_point: Vec3,
 ) {
         let mut background_sprite = TextureAtlasSprite::new(0);
         background_sprite.color = Color::rgb(0.5, 0.5, 0.5);
@@ -124,7 +121,7 @@ pub fn spawn_player(
         commands.spawn(SpriteSheetBundle {
             sprite,
             texture_atlas: ascii.0.clone(),
-            transform: Transform::from_translation(Vec3::new(60.0, -50.0, 900.0)),
+            transform: Transform::from_translation(spawn_point),
             ..default()
         })
         .insert(Player {
@@ -176,15 +173,16 @@ pub fn attack_enemy(
                 println!("Enemy Health: {}", enemy_health.health);
                 player.timer.reset();
                 // add knock back effect based on player direction
-                knock_back(player.direction, &wall_query, enemy_transform);
+                knock_back(player_transform, &wall_query, enemy_transform);
                 
             }
         }
 }
 
-// knock back funstion which knocks back enemy based on player direction
+// complete rework of knock back function, making knock based on 
+// enemy velocity instead of player direction
 pub fn knock_back(
-    player_direction: u16,
+    player_transform: &Transform,
     wall_query: &Query<&Transform, (With<TileCollider>, Without<Player>, Without<Pathinder>)>,
     mut enemy_transform: Mut<'_, Transform>,
 ) {
@@ -192,7 +190,7 @@ pub fn knock_back(
         knock_back_measurement(
             enemy_transform.translation, 
             wall_query, 
-            player_direction
+            knock_back_direction(player_transform.translation, enemy_transform.translation)
         ) + 
         enemy_transform.translation;
 }
@@ -200,19 +198,30 @@ pub fn knock_back(
 pub fn knock_back_measurement(
     enemy_position: Vec3,
     wall_query: &Query<&Transform, (With<TileCollider>, Without<Player>, Without<Pathinder>)>, 
-    player_direction: u16
+    knock_back_direction: Collision,
 ) -> Vec3 {
-    let knock_back_prediction = match player_direction {
-        360 => Vec3::new(0.0, 100.0, 0.0),
-        90 => Vec3::new(100.0, 0.0, 0.0),
-        180 => Vec3::new(0.0, -100.0, 0.0),
-        270 => Vec3::new(-100.0, 0.0, 0.0),
-        _ => Vec3::new(0.0, 0.0, 0.0),
-    }; 
-    // find all wall that are within  50 pixels perpendicular of the player direction
-    // if there is a wall within 50 pixels perpendicular of the player direction
-    // create an array of all the walls within 50 pixels perpendicular of the player direction
-    // then find which wall is closest to the player and return the distance between the player and the wall
+    let mut player_direction = 90;
+    let mut knock_back_prediction = Vec3::new(0.0, 0.0, 0.0);
+    match knock_back_direction {
+        Collision::Left => {
+            player_direction = 270;
+            knock_back_prediction = Vec3::new(100.0, 0.0, 0.0);
+        }
+        Collision::Right => {
+            player_direction = 90;
+            knock_back_prediction = Vec3::new(-100.0, 0.0, 0.0);
+            println!("Right")
+        }
+        Collision::Top => {
+            player_direction = 360;
+            knock_back_prediction = Vec3::new(0.0, 100.0, 0.0);
+        }
+        Collision::Bottom => {
+            player_direction = 180;
+            knock_back_prediction = Vec3::new(0.0, -100.0, 0.0);
+        }
+        _ => {}
+    }
     let mut perpendicular_walls: Vec<Vec3> = Vec::new();
     for wall in wall_query.iter() {
         match player_direction {
@@ -282,7 +291,6 @@ pub fn knock_back_measurement(
         }
         _ => ()
     };
-    dbg!(collision_wall);
     match player_direction {
         360 => {
             if knock_back_prediction.y + enemy_position.y + 50.0 > collision_wall.y {
@@ -314,5 +322,22 @@ pub fn knock_back_measurement(
             }
         }
         _ => Vec3::new(0.0, 0.0, 0.0)
+    }
+}
+
+fn knock_back_direction(
+    player_translation: Vec3,
+    enemy_translation: Vec3,
+) -> Collision {
+    let collision = collide(
+        player_translation,
+        Vec2::splat(PLAYER_SIZE * 3.0),
+        enemy_translation,
+        Vec2::splat(ENEMY_SIZE),
+    );
+    if collision.is_some() {
+        return collision.unwrap() 
+    } else {
+        return Collision::Inside;
     }
 }

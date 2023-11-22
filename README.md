@@ -1,12 +1,12 @@
 Todo:
 
   V1:
-    - create spawn point in level as part of level(possibly as component)
+    - --create spawn point in level as part of level(possibly as component)--
     - --create attack cooldown timer--
     - --make player attacks cause knockback--
-    - make level exit which sends player to next level or title screen
-    - create basic title screen
-    - give player a facing direction that directs attacks
+    - --make level exit which sends player to next level or title screen--
+    - --create basic title screen--
+    - --give player a facing direction that directs attacks--
 
   V2:
     - add attack annimation
