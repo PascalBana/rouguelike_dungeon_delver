@@ -1,4 +1,4 @@
-use bevy::{prelude::*, core_pipeline::clear_color::ClearColorConfig};
+use bevy::{prelude::*, core_pipeline::clear_color::ClearColorConfig, app::AppExit};
 
 mod player;
 mod ascii;
@@ -38,26 +38,33 @@ fn main() {
         .run(); 
 }
 
-// create title screen with a play button in the center to start the game
-
 pub struct StartupPlugin;
 
 impl Plugin for StartupPlugin {
     fn build(&self, app: &mut App) {
         app
-            .add_systems(Startup, spawn_camera);
+            .add_systems(Startup, spawn_camera)
+            .add_systems(Update, exit_app_on_esc);
     }
 }
 
 fn spawn_camera(mut commands: Commands) {
-    commands.spawn(Camera2dBundle {
+    commands.spawn(Camera2dBundle { // a bundle is a group of components
         camera_2d: Camera2d {
-            clear_color: ClearColorConfig::Custom(Color::rgb(0.0, 0.0, 0.0)),
+            clear_color: ClearColorConfig::Custom(Color::rgb(0.0, 0.0, 0.0)), // set the background color
         },
-        ..default()
+        ..default() // use default values for the rest of the components
     });
 }
 
+fn exit_app_on_esc(
+    keyboard_input: Res<Input<KeyCode>>,
+    mut app_exit_events: ResMut<Events<AppExit>>,
+) {
+    if keyboard_input.just_pressed(KeyCode::Escape) {
+        app_exit_events.send(AppExit);
+    }
+} 
 
 
 

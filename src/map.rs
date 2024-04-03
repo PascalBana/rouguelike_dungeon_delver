@@ -5,7 +5,7 @@ use std::{
 };
 
 use bevy::{prelude::*, sprite::collide_aabb::collide};
-use crate::{ascii::*, player::{spawn_player, Player}, enemy::spawn_enemy};
+use crate::{ascii::*, player::{spawn_player, Player}, enemy::{spawn_enemy, Enemy}};
 use crate::gamestate::GameState;
 
 
@@ -18,6 +18,13 @@ impl Plugin for MapPlugin {
                 OnEnter(GameState::Game(GameLevel::Level1)), 
                 load_level
             )
+            .add_systems(OnExit(GameState::Game(GameLevel::Level1)), 
+            despawn_level
+            )
+            .add_systems(
+                OnEnter(GameState::Game(GameLevel::Level2)),
+                load_level
+            )
             .add_systems(
                 FixedUpdate,
                 exit_level.run_if(in_state(GameState::Game(GameLevel::Level1))),
@@ -27,6 +34,8 @@ impl Plugin for MapPlugin {
 
 const TILE_SIZE: f32 = 50.0;
 
+#[derive(Component)]
+pub struct Tile;
 
 #[derive(Component)]
 pub struct TileCollider;
@@ -58,6 +67,9 @@ pub fn load_level(
         }
         GameState::Game(GameLevel::Level2) => {
             let file = File::open("assets/level_2.txt").expect("No file found");
+            let player_spawn_point = Vec3::new(100.0, -100.0, 890.0);
+            spawn_map(&mut commands, &ascii, file);
+            spawn_player(&mut commands, &ascii, player_spawn_point);
         }
         GameState::Game(GameLevel::Level3) => {
             let file = File::open("assets/level_3.txt").expect("No file found");
@@ -89,6 +101,7 @@ pub fn spawn_map(
                             ..default()
                         })
                         .insert(TileCollider)
+                        .insert(Tile)
                         .id()
                     }
                     '%' => {
@@ -103,6 +116,7 @@ pub fn spawn_map(
                             ..default()
                         })
                         .insert(ExitTile)
+                        .insert(Tile)
                         .id()
                     }
                     _ => {
@@ -115,7 +129,10 @@ pub fn spawn_map(
                             texture_atlas: ascii.0.clone(),
                             transform: Transform::from_translation(Vec3::new(x as f32 * TILE_SIZE, -(y as f32 )* TILE_SIZE, 100.0)),
                             ..default()
-                        }).id()
+                            
+                        })
+                        .insert(Tile)
+                        .id()
                     }
                 };
                 tiles.push(tile);
@@ -134,7 +151,6 @@ fn exit_level(
     if player_reached_exit_tile(
         player_transform.translation, 
         exit_tile_transform.translation) {
-            panic!("Player reached exit tile");
             gamestate.set(GameState::Game(GameLevel::Level2));
         }
 }
@@ -158,9 +174,17 @@ fn player_reached_exit_tile (
 
 fn despawn_level(
     mut commands: Commands,
-    mut query: Query<Entity, Without<Camera2d>>,
+    mut enemy_query: Query<Entity, With<Enemy>>,
+    mut tile_query: Query<Entity, With<Tile>>,
+    mut player_query: Query<Entity, With<Player>>,
 ) {
-    for entity in query.iter_mut() {
+    for entity in enemy_query.iter_mut() {
+        commands.entity(entity).despawn_recursive();
+    }
+    for entity in tile_query.iter_mut() {
+        commands.entity(entity).despawn_recursive();
+    }
+    for entity in player_query.iter_mut() {
         commands.entity(entity).despawn_recursive();
     }
 }

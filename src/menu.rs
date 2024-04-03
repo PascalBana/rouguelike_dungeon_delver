@@ -66,7 +66,7 @@ impl Plugin for MenuPlugin {
                 OnExit(MenuState::SettingsSound),
                 despawn_screen::<OnSoundSettingsMenuScreen>,
             )
-            // Common systems to all screens that handles buttons behavior
+            // Common systems to all screens that does buttons behavior
             .add_systems(
                 Update,
                 (menu_action, button_system).run_if(in_state(GameState::Menu)),

@@ -1,10 +1,10 @@
 use bevy::transform::components::Transform;
 
-use crate::enemy::{ENEMY_SIZE, Enemy, self};
+use crate::enemy::{ENEMY_SIZE, Enemy};
 use crate::health::Health;
 use crate::gamestate::GameState;    
 
-use crate::{ascii::*, player};
+use crate::ascii::*;
 use crate::map::{TileCollider, GameLevel};
 use crate::pathfinding::Pathinder;
 use bevy::prelude::*;
@@ -20,7 +20,13 @@ impl Plugin for PlayerPlugin {
                 player_movement, 
                 camera_follow, 
                 attack_enemy, 
-            ).run_if(in_state(GameState::Game(GameLevel::Level1))));
+            ).run_if(in_state(GameState::Game(GameLevel::Level1))))
+            .add_systems(
+            FixedUpdate, (
+                player_movement, 
+                camera_follow, 
+                attack_enemy, 
+            ).run_if(in_state(GameState::Game(GameLevel::Level2))));
     }
     
 }
@@ -203,22 +209,23 @@ pub fn knock_back_measurement(
     let mut player_direction = 90;
     let mut knock_back_prediction = Vec3::new(0.0, 0.0, 0.0);
     match knock_back_direction {
-        Collision::Left => {
-            player_direction = 270;
-            knock_back_prediction = Vec3::new(100.0, 0.0, 0.0);
-        }
-        Collision::Right => {
+        Collision::Left => { // actually right
             player_direction = 90;
-            knock_back_prediction = Vec3::new(-100.0, 0.0, 0.0);
+            knock_back_prediction = Vec3::new(100.0, 0.0, 0.0);
             println!("Right")
         }
-        Collision::Top => {
-            player_direction = 360;
-            knock_back_prediction = Vec3::new(0.0, 100.0, 0.0);
+        Collision::Right => { // actually left
+            player_direction = 270;
+            knock_back_prediction = Vec3::new(-100.0, 0.0, 0.0);
+            println!("left")
         }
-        Collision::Bottom => {
+        Collision::Top => { // actually bottom
             player_direction = 180;
             knock_back_prediction = Vec3::new(0.0, -100.0, 0.0);
+        }
+        Collision::Bottom => { // actually top
+            player_direction = 360;
+            knock_back_prediction = Vec3::new(0.0, 100.0, 0.0);
         }
         _ => {}
     }
